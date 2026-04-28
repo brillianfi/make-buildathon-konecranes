@@ -8,14 +8,15 @@ orchestrates uploads and downloads the resulting .xlsx.
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import tempfile
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QDragEnterEvent, QDropEvent
+from PyQt6.QtCore import Qt, QThread, QUrl, pyqtSignal
+from PyQt6.QtGui import QDesktopServices, QDragEnterEvent, QDropEvent
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -128,6 +129,7 @@ class ReportApp(QWidget):
         self.image_folders: list[str] = []
         self.image_records: list[dict[str, Any]] = []
         self.report_tempfile: str | None = None
+        self.report_location: str | None = None
         self.worker: ReportWorker | None = None
 
         self.audio_drop = DropArea(
@@ -176,6 +178,20 @@ class ReportApp(QWidget):
             lbl.setStyleSheet("color: #888;")
             self.step_labels.append(lbl)
 
+        # Report location row — shown once a report exists (temp or saved).
+        self.location_label = QLabel("")
+        self.location_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        self.location_label.setWordWrap(True)
+        self.location_label.setVisible(False)
+        self.reveal_button = QPushButton("Open Folder")
+        self.reveal_button.clicked.connect(self.reveal_report)
+        self.reveal_button.setVisible(False)
+        location_row = QHBoxLayout()
+        location_row.addWidget(self.location_label, stretch=1)
+        location_row.addWidget(self.reveal_button)
+
         self.status_label = QLabel(f"Backend: {BACKEND_URL}")
         self.status_label.setStyleSheet("color: #555;")
 
@@ -190,6 +206,7 @@ class ReportApp(QWidget):
         layout.addWidget(self.progress_bar)
         for lbl in self.step_labels:
             layout.addWidget(lbl)
+        layout.addLayout(location_row)
         layout.addWidget(self.status_label)
         self.setLayout(layout)
 
@@ -305,7 +322,8 @@ class ReportApp(QWidget):
             self.step_labels[i].setStyleSheet("color: #2a7a2a;")
         self.generate_button.setEnabled(True)
         self.save_button.setEnabled(True)
-        self.status_label.setText("Report ready.")
+        self._set_report_location(tmp, saved=False)
+        self.status_label.setText("Report ready. Click 'Save Report…' to choose a destination.")
         QMessageBox.information(self, "Report Ready", "Inspection report generated.")
 
     def on_failed(self, message: str) -> None:
@@ -331,7 +349,32 @@ class ReportApp(QWidget):
         if not path.lower().endswith(".xlsx"):
             path += ".xlsx"
         Path(path).write_bytes(Path(self.report_tempfile).read_bytes())
+        self._set_report_location(path, saved=True)
+        self.status_label.setText("Report saved.")
         QMessageBox.information(self, "Saved", f"Report saved:\n{path}")
+
+    def _set_report_location(self, path: str, *, saved: bool) -> None:
+        self.report_location = path
+        prefix = "Saved to" if saved else "Staged at (temporary)"
+        color = "#2a7a2a" if saved else "#555"
+        self.location_label.setText(f"{prefix}: {path}")
+        self.location_label.setStyleSheet(f"color: {color};")
+        self.location_label.setVisible(True)
+        self.reveal_button.setVisible(True)
+
+    def reveal_report(self) -> None:
+        if not self.report_location:
+            return
+        target = Path(self.report_location)
+        if not target.exists():
+            QMessageBox.warning(self, "Not Found", f"File no longer exists:\n{target}")
+            return
+        if sys.platform == "darwin":
+            subprocess.run(["open", "-R", str(target)], check=False)
+        elif sys.platform.startswith("win"):
+            subprocess.run(["explorer", "/select,", str(target)], check=False)
+        else:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(target.parent)))
 
 
 def main() -> int:

@@ -139,4 +139,5 @@ def build_report(
         template_path=template_path,
         glossary=glossary,
     )
-    return write_workbook(workbook, output_path)
+    images_by_filename = {img.filename: img.path for img in images}
+    return write_workbook(workbook, output_path, images_by_filename=images_by_filename)
