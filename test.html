@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Image + Audio Combiner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 500px;
+      background: #fff;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    label {
+      display: block;
+      margin-top: 16px;
+      font-weight: bold;
+    }
+
+    input[type="file"] {
+      margin-top: 8px;
+      width: 100%;
+    }
+
+    button {
+      margin-top: 24px;
+      padding: 12px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      background: #0078d4;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #005fa3;
+    }
+
+    .info {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Combine Images with Audio</h1>
+
+    <label for="audioFile">Audio file</label>
+    <input
+      type="file"
+      id="audioFile"
+      accept="audio/*"
+    />
+
+    <label for="imageFiles">Image folder</label>
+    <input
+      type="file"
+      id="imageFiles"
+      accept="image/*"
+      webkitdirectory
+      multiple
+    />
+
+    <button id="combineBtn">
+      Combine images & audio
+    </button>
+
+    <div class="info" id="status"></div>
+  </div>
+
+  <script>
+    const audioInput = document.getElementById('audioFile');
+    const imageInput = document.getElementById('imageFiles');
+    const button = document.getElementById('combineBtn');
+    const status = document.getElementById('status');
+
+    button.addEventListener('click', () => {
+      const audioFile = audioInput.files[0];
+      const imageFiles = imageInput.files;
+
+      if (!audioFile) {
+        status.textContent = 'Please select an audio file.';
+        return;
+      }
+
+      if (!imageFiles || imageFiles.length === 0) {
+        status.textContent = 'Please select an image folder.';
+        return;
+      }
+
+      // Mock behaviour — backend will handle this later
+      status.textContent =
+        `Selected ${imageFiles.length} images and audio file "${audioFile.name}".`;
+
+      console.log('Audio file:', audioFile);
+      console.log('Image files:', imageFiles);
+
+      /*
+      // Example for later backend wiring:
+      const formData = new FormData();
+      formData.append('audio', audioFile);
+
+      for (const img of imageFiles) {
+        formData.append('images', img);
+      }
+
+      fetch('/combine', {
+        method: 'POST',
+        body: formData
+      });
+      */
+    });
+  </script>
+
+</body>
+</html>
