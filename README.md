@@ -1,0 +1,1 @@
+This is a demo project for the MAKE Konecranes buildathon 2026.
