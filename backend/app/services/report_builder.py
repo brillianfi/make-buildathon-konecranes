@@ -3,7 +3,7 @@ from pathlib import Path
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from app.clients.azure_openai import get_azure_client
+from app.clients.azure_openai import get_gpt_client
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.core.prompts import load_prompt
@@ -67,7 +67,7 @@ def synthesize_workbook(
     glossary: str = "",
 ) -> ReportWorkbook:
     settings = get_settings()
-    client = get_azure_client()
+    client = get_gpt_client()
     template_text = flatten_template_to_text(template_path)
 
     transcript_text = transcript.text if transcript and transcript.text else "(none)"

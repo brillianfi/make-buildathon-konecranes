@@ -2,7 +2,7 @@ from pathlib import Path
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from app.clients.azure_openai import get_azure_client
+from app.clients.azure_openai import get_whisper_client
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.domain.transcript import Transcript, TranscriptSegment
@@ -18,7 +18,7 @@ def transcribe(audio_path: Path, *, prompt: str | None = None) -> Transcript:
     the prototype. Operator audio is typically short enough.
     """
     settings = get_settings()
-    client = get_azure_client()
+    client = get_whisper_client()
     log.info(
         "transcribe.start",
         file=str(audio_path),

@@ -39,7 +39,9 @@ def create_app() -> FastAPI:
         "app.start",
         storage_dir=str(settings.storage_dir),
         templates_dir=str(settings.templates_dir),
+        whisper_endpoint=settings.azure_openai_whisper_endpoint,
         whisper_deployment=settings.azure_openai_whisper_deployment,
+        gpt_endpoint=settings.azure_openai_gpt_endpoint,
         gpt_deployment=settings.azure_openai_gpt_deployment,
     )
     return app

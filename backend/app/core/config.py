@@ -14,10 +14,17 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # Shared Azure key.
     azure_openai_api_key: str = Field(min_length=1)
-    azure_openai_endpoint: str = Field(min_length=1)
-    azure_openai_api_version: str = "2024-08-01-preview"
+
+    # Whisper deployment (transcription).
+    azure_openai_whisper_endpoint: str = Field(min_length=1)
+    azure_openai_whisper_api_version: str = "2024-06-01"
     azure_openai_whisper_deployment: str = Field(min_length=1)
+
+    # GPT deployment (vision + report synthesis).
+    azure_openai_gpt_endpoint: str = Field(min_length=1)
+    azure_openai_gpt_api_version: str = "2024-12-01-preview"
     azure_openai_gpt_deployment: str = Field(min_length=1)
 
     log_level: str = "INFO"
@@ -36,7 +43,7 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
-    @field_validator("azure_openai_endpoint")
+    @field_validator("azure_openai_whisper_endpoint", "azure_openai_gpt_endpoint")
     @classmethod
     def _strip_trailing_slash(cls, v: str) -> str:
         return v.rstrip("/")

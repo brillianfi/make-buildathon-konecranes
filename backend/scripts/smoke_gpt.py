@@ -3,17 +3,17 @@
     PYTHONPATH=. uv run python scripts/smoke_gpt.py
 """
 
-from app.clients.azure_openai import get_azure_client
+from app.clients.azure_openai import get_gpt_client
 from app.core.config import get_settings
 
 
 def main() -> None:
     settings = get_settings()
-    print(f"Endpoint   : {settings.azure_openai_endpoint}")
+    print(f"Endpoint   : {settings.azure_openai_gpt_endpoint}")
     print(f"GPT        : {settings.azure_openai_gpt_deployment}")
-    print(f"API ver    : {settings.azure_openai_api_version}")
+    print(f"API ver    : {settings.azure_openai_gpt_api_version}")
 
-    client = get_azure_client()
+    client = get_gpt_client()
     response = client.chat.completions.create(
         model=settings.azure_openai_gpt_deployment,
         messages=[
