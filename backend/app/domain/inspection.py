@@ -46,11 +46,12 @@ class Finding(BaseModel):
 
 class Inspection(BaseModel):
     id: UUID = Field(default_factory=uuid4)
-    template_filename: str
+    template_filename: str | None = None
     status: InspectionStatus = InspectionStatus.CREATED
     images: list[ImageAsset] = Field(default_factory=list)
     audio: AudioAsset | None = None
     audio_started_at: datetime | None = None
+    audio_language: str | None = None
     transcript: Transcript | None = None
     findings: list[Finding] = Field(default_factory=list)
     report_path: Path | None = None

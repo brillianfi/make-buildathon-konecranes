@@ -1,6 +1,6 @@
 """GPT-only smoke test (skips Whisper).
 
-    PYTHONPATH=. uv run python scripts/smoke_gpt.py
+PYTHONPATH=. uv run python scripts/smoke_gpt.py
 """
 
 from app.clients.azure_openai import get_gpt_client

@@ -1,6 +1,6 @@
 """End-to-end smoke test: Whisper transcription + GPT summary.
 
-    PYTHONPATH=. uv run python scripts/smoke_azure.py
+PYTHONPATH=. uv run python scripts/smoke_azure.py
 """
 
 from __future__ import annotations

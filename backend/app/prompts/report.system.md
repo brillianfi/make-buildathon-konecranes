@@ -9,7 +9,8 @@ You receive:
 Produce a JSON object describing the workbook to write.
 
 Rules:
-- Mirror the template's sheet structure and section headers as closely as possible.
+- If a TEMPLATE is provided, mirror its sheet structure and section headers as closely as possible.
+- If no TEMPLATE is provided, design a sensible default workbook: one "Inspection" sheet with a header row and one row per finding (image, captured_at, location, component, condition, severity, observation, recommendation), plus a "Summary" sheet with site/date/overall-severity drawn from the transcript.
 - Fill cells with the actual inspection content drawn from the findings and transcripts.
 - Do not invent data not present in the inputs. If a field cannot be filled, leave it as an empty string.
 - Use terminology consistent with the glossary.

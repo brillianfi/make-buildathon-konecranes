@@ -63,12 +63,23 @@ def synthesize_workbook(
     findings: list[Finding],
     images: list[ImageAsset],
     transcript: Transcript | None,
-    template_path: Path,
+    template_path: Path | None = None,
     glossary: str = "",
 ) -> ReportWorkbook:
     settings = get_settings()
     client = get_gpt_client()
-    template_text = flatten_template_to_text(template_path)
+
+    if template_path is not None:
+        template_block = (
+            "TEMPLATE WORKBOOK (flattened — mirror this structure):\n"
+            f"{flatten_template_to_text(template_path)}"
+        )
+    else:
+        template_block = (
+            "TEMPLATE WORKBOOK: (none provided — design a sensible default with one "
+            "'Inspection' sheet listing each finding as a row plus a 'Summary' sheet "
+            "with site/date/overall severity drawn from the transcript.)"
+        )
 
     transcript_text = transcript.text if transcript and transcript.text else "(none)"
 
@@ -79,14 +90,13 @@ def synthesize_workbook(
         f"{transcript_text}\n\n"
         "GLOSSARY:\n"
         f"{glossary or '(none)'}\n\n"
-        "TEMPLATE WORKBOOK (flattened):\n"
-        f"{template_text}"
+        f"{template_block}"
     )
 
     log.info(
         "report.synthesize.start",
         findings=len(findings),
-        template=template_path.name,
+        template=template_path.name if template_path else "(none)",
     )
 
     response = client.chat.completions.create(
@@ -118,7 +128,7 @@ def build_report(
     findings: list[Finding],
     images: list[ImageAsset],
     transcript: Transcript | None,
-    template_path: Path,
+    template_path: Path | None = None,
     output_path: Path,
     glossary: str = "",
 ) -> Path:

@@ -60,16 +60,24 @@ def _parse_metadata(raw: str) -> list[ImageMeta]:
 @router.post("", response_model=Inspection, status_code=201)
 def create_inspection(
     storage: Annotated[LocalStorage, Depends()],
-    template_filename: Annotated[str, Form()],
     metadata: Annotated[str, Form(description="JSON array of {filename, captured_at, location?}")],
     images: Annotated[list[UploadFile], File()],
     audio: Annotated[UploadFile, File()],
+    template_filename: Annotated[
+        str | None,
+        Form(description="Optional .xlsx template filename from GET /templates."),
+    ] = None,
     audio_started_at: Annotated[datetime | None, Form()] = None,
+    audio_language: Annotated[
+        str | None,
+        Form(description="ISO 639-1 code (e.g. 'en', 'fi'). Omit or 'auto' to auto-detect."),
+    ] = None,
 ) -> Inspection:
     if not images:
         raise ValidationError("At least one image is required")
 
-    resolve_template(template_filename)
+    if template_filename:
+        resolve_template(template_filename)
     image_metas = _parse_metadata(metadata)
     meta_by_filename = {m.filename: m for m in image_metas}
 
@@ -80,6 +88,7 @@ def create_inspection(
     inspection = Inspection(
         template_filename=template_filename,
         audio_started_at=audio_started_at,
+        audio_language=audio_language,
     )
 
     for upload in images:

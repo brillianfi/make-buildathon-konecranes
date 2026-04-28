@@ -29,7 +29,11 @@ def run_inspection(inspection: Inspection, storage: LocalStorage) -> Inspection:
         glossary = load_glossary_text()
 
         # 1. Transcribe the single audio file.
-        inspection.transcript = transcribe(inspection.audio.path, prompt=glossary[:500])
+        inspection.transcript = transcribe(
+            inspection.audio.path,
+            prompt=glossary[:500],
+            language=inspection.audio_language,
+        )
 
         # 2. Order images by frontend-supplied capture time.
         inspection.images.sort(key=lambda i: i.captured_at)
@@ -51,8 +55,10 @@ def run_inspection(inspection: Inspection, storage: LocalStorage) -> Inspection:
         with ThreadPoolExecutor(max_workers=_VISION_CONCURRENCY) as pool:
             inspection.findings = list(pool.map(analyse, range(len(inspection.images))))
 
-        # 5. Build the xlsx report.
-        template_path = resolve_template(inspection.template_filename)
+        # 5. Build the xlsx report (template is optional).
+        template_path = (
+            resolve_template(inspection.template_filename) if inspection.template_filename else None
+        )
         report_path = build_report(
             findings=inspection.findings,
             images=inspection.images,
