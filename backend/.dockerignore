@@ -1,0 +1,13 @@
+.venv
+var/
+__pycache__/
+*.pyc
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.git
+.gitignore
+tests/
+README.md
+Makefile
+.pre-commit-config.yaml
