@@ -24,6 +24,7 @@ def base_url(httpserver: HTTPServer) -> str:
 
 # ---------------- /templates ----------------
 
+
 def test_list_templates_parses_payload(httpserver: HTTPServer, base_url: str) -> None:
     payload = [
         {"filename": "Inspection_Report.xlsx", "path": "/abs/x.xlsx", "size_bytes": 1024},
@@ -46,6 +47,7 @@ def test_list_templates_raises_on_5xx(httpserver: HTTPServer, base_url: str) -> 
 
 # ---------------- POST /inspections ----------------
 
+
 def test_create_inspection_sends_multipart_with_metadata(
     httpserver: HTTPServer, base_url: str, tmp_path: Path
 ) -> None:
@@ -65,9 +67,7 @@ def test_create_inspection_sends_multipart_with_metadata(
 
     def handler(request: Request) -> Response:
         captured["form"] = request.form.to_dict()
-        captured["image_filenames"] = sorted(
-            f.filename for f in request.files.getlist("images")
-        )
+        captured["image_filenames"] = sorted(f.filename for f in request.files.getlist("images"))
         captured["audio_filename"] = request.files["audio"].filename
         captured["audio_bytes"] = request.files["audio"].read()
         return Response(
@@ -121,6 +121,7 @@ def test_create_inspection_propagates_validation_error(
 
 # ---------------- POST /inspections/{id}/run ----------------
 
+
 def test_run_inspection_passes_sync_true(httpserver: HTTPServer, base_url: str) -> None:
     httpserver.expect_request(
         "/inspections/abc-123/run",
@@ -145,14 +146,15 @@ def test_run_inspection_propagates_failed_status(httpserver: HTTPServer, base_ur
 
 # ---------------- GET /inspections/{id}/report ----------------
 
+
 def test_download_report_streams_to_file(
     httpserver: HTTPServer, base_url: str, tmp_path: Path
 ) -> None:
     body = b"PK\x03\x04 fake-xlsx-binary-content"
     xlsx_mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    httpserver.expect_request(
-        "/inspections/abc-123/report", method="GET"
-    ).respond_with_data(body, content_type=xlsx_mime)
+    httpserver.expect_request("/inspections/abc-123/report", method="GET").respond_with_data(
+        body, content_type=xlsx_mime
+    )
 
     out = tmp_path / "report.xlsx"
     returned = backend.download_report("abc-123", out, base_url=base_url)
@@ -164,11 +166,64 @@ def test_download_report_streams_to_file(
 def test_download_report_raises_when_not_ready(
     httpserver: HTTPServer, base_url: str, tmp_path: Path
 ) -> None:
-    httpserver.expect_request(
-        "/inspections/abc-123/report", method="GET"
-    ).respond_with_json({"detail": "Report not ready"}, status=400)
+    httpserver.expect_request("/inspections/abc-123/report", method="GET").respond_with_json(
+        {"detail": "Report not ready"}, status=400
+    )
 
     with pytest.raises(RuntimeError) as exc:
         backend.download_report("abc-123", tmp_path / "x.xlsx", base_url=base_url)
 
     assert "400" in str(exc.value)
+
+
+def test_list_templates_raises_on_404(httpserver: HTTPServer, base_url: str) -> None:
+    httpserver.expect_request("/templates", method="GET").respond_with_json(
+        {"detail": "Not found"}, status=404
+    )
+
+    with pytest.raises(RuntimeError) as exc:
+        backend.list_templates(base_url)
+
+    assert "404" in str(exc.value)
+
+
+def test_create_inspection_sends_empty_template_when_none_selected(
+    httpserver: HTTPServer, base_url: str, tmp_path: Path
+) -> None:
+    audio = tmp_path / "audio.wav"
+    audio.write_bytes(b"x")
+    img = tmp_path / "photo.jpg"
+    img.write_bytes(b"x")
+
+    captured: dict = {}
+
+    def handler(request: Request) -> Response:
+        captured["template"] = request.form.get("template_filename", "<absent>")
+        return Response(
+            '{"id": "abc", "status": "created"}',
+            status=201,
+            content_type="application/json",
+        )
+
+    httpserver.expect_request("/inspections", method="POST").respond_with_handler(handler)
+
+    backend.create_inspection(
+        audio_path=audio,
+        image_paths=[img],
+        metadata=[{"filename": "photo.jpg", "captured_at": "2026-03-17T15:00:00"}],
+        template_filename="",
+        base_url=base_url,
+    )
+
+    assert captured["template"] == ""
+
+
+def test_run_inspection_raises_on_404(httpserver: HTTPServer, base_url: str) -> None:
+    httpserver.expect_request(
+        "/inspections/unknown/run", method="POST", query_string={"sync": "true"}
+    ).respond_with_json({"detail": "Not found"}, status=404)
+
+    with pytest.raises(RuntimeError) as exc:
+        backend.run_inspection("unknown", base_url=base_url)
+
+    assert "404" in str(exc.value)
